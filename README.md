@@ -1,4 +1,4 @@
-# GTA 6 Shorts pipeline (GTA VI launched Nov 19, 2026)
+# ClipFarm
 
 ```
 scan: Gemini writes search queries (checks what's trending, learns from past queries)
