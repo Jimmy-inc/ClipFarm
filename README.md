@@ -21,13 +21,14 @@ Clips that aren't brand-safe (sexual content, slurs, real-money gambling) are st
 ```
 Local recordings use the same render path, with Claude picking the window from the transcript.
 
-## Setup (macOS)
+## Setup for macOS
 ```bash
 brew install ffmpeg-full deno          # plain `ffmpeg` lacks libass (captions); deno is needed by yt-dlp for YouTube
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 cp .env.example .env                   # fill in the keys
 ```
 - `GEMINI_API_KEY`: aistudio.google.com. Free tier: 8 h of YouTube video per day. Public videos only.
+   ClipFarm supports multiple Gemini API keys. My setup uses 3, and rotates them every 8 hours.
 - `YOUTUBE_API_KEY`: Google Cloud, YouTube Data API v3, API key. Use a **different Cloud project** from uploads
   so discovery and uploads each get 10,000 quota units/day.
 - `TWITCH_CLIENT_ID` / `TWITCH_CLIENT_SECRET`: dev.twitch.tv/console/apps -> Register Your Application
@@ -36,9 +37,7 @@ cp .env.example .env                   # fill in the keys
   Several Twitch apps: copy `.env` to `2.env`, `3.env`, ... and put another app's Twitch Client ID and
   secret in each (only their TWITCH_ lines are used; every other key comes from `.env`). The app in use
   switches every `twitch.key_rotation_hours` (8) by the clock, and the log says which file it is on.
-- `OPENAI_API_KEY` (optional): platform.openai.com -> API keys; needs prepaid credit (a ChatGPT subscription
-  doesn't include the API). Judges Twitch clips so Gemini's free quota goes to YouTube. Empty = Gemini does it.
-- `ANTHROPIC_API_KEY`: only for local files without `--start/--end`.
+
 
 ## Use
 ```bash
@@ -68,7 +67,7 @@ Each Short gets a `.json` sidecar (title, description, pinned comment, tags, sou
 with the title, the pinned-comment blurb (context + a credit line) and the description, ready to paste into
 YouTube Studio, next to the `.mp4`. YouTube's API can't pin comments, so pinning stays manual.
 
-## Rights gate (at upload)
+## Rights gate - You can ignore this part if you plan to upload by hand
 `scan` renders the top videos whatever their source, so you can judge the bot's picks. Each clip's
 `.json` records its rights basis. **`approve` and auto-upload refuse clips without one**: your own
 channels, `rights.permitted_channels` (with proof), or Creative Commons BY. Adding a creator to
