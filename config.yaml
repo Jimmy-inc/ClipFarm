@@ -1,0 +1,206 @@
+# ---------- GTA 6 Shorts pipeline config ----------
+game_name: "Grand Theft Auto VI"
+sources: [youtube]                    # youtube and/or twitch
+cleanup_work: true                    # delete downloaded sections once a video is processed
+own_channel_name: "me"                # credit name used for your own local recordings
+
+# ---- Game profiles: `--profile cs2` swaps the game name and title filters in one go ----
+default_profile: gta6                 # used when no --profile is given
+profiles:
+  gta6:                               # launched Nov 19, 2026 (PS5 / Xbox Series X|S)
+    game_name: "Grand Theft Auto VI"
+    keywords: ["gta 6", "gta vi", "gta6", "grand theft auto vi", "grand theft auto 6"]
+    # GTA V and its spin-offs (Online, RP servers), plus pre-launch content that isn't gameplay
+    exclude_title_patterns: ['\bgta ?(5|v)\b', '\bgrand theft auto (5|v)\b', '\bgta ?online\b',
+                             '\bgta ?rp\b', '\bnopixel\b', '\bfivem\b', '\bleak(s|ed)?\b',
+                             '\bpredictions?\b', '\btrailers?\b', 'everything we know', '\bpre-?order']
+    sources: [youtube, twitch]
+    discovery:
+      not_before: "2026-11-18T10:00:00Z"   # first regions unlock ~11:00 UTC Nov 18: nothing older is gameplay
+      lookback_hours: 72
+      min_views: 500                  # day-one stream VODs are fresh; views lag
+      max_video_minutes: 720          # launch streams run 6-12 h; each is watched in full, chunk by chunk
+      exclude_channel_patterns: ['^rockstar games$', '^ign\b', '^gamespot\b', '^gameranx$', '^gtaseriesvideos$',
+                                 '^digital foundry$']   # trailers, news, tech analysis
+    scan:
+      fixed_queries: ["GTA 6"]        # searched every round, on top of the new queries Gemini writes
+      search_durations: ["long"]      # streams and playthroughs; one band halves YouTube quota use
+      query_notes: "The game came out on 2026-11-19. Search for people playing it (streams, first hours,
+        free roam, chaos, police chases, stunts, funny moments), not trailers, leaks, predictions or reviews."
+    gemini:
+      max_scan_minutes: 0             # 0 = watch every video in full, in chunk_minutes pieces (a 12 h stream = 18 calls)
+      game_notes: "Released 2026-11-19. Set in the state of Leonida (Vice City and its Miami-like
+        surroundings, swamps, Keys); the two playable leads are Lucia Caminos and Jason Duval. GTA V, by
+        contrast, is Los Santos with Michael, Franklin and Trevor, and GTA Online / roleplay servers (NoPixel,
+        FiveM) run on GTA V: those are not GTA VI."
+      clip_rules: "The game is brand new, so avoid story spoilers: no main-mission cutscenes, mission
+        endings, character deaths or plot reveals. Free-roam chaos, physics, police chases, stunts, funny
+        NPCs, fails and glitches are ideal."
+    twitch:
+      game_name: "Grand Theft Auto VI"     # checked on Twitch, Nov 18
+      min_clip_views: 100
+      exclude_broadcaster_patterns: ['^rockstargames$']
+    upload:
+      extra_tags: ["gta 6", "gta vi", "grand theft auto 6"]
+      hashtags: "#Shorts #GTA6"
+  cs2:
+    game_name: "Counter-Strike 2"
+    keywords: ["cs2", "counter-strike 2", "counter strike 2", "counterstrike 2", "cs 2"]
+    exclude_title_patterns: ['\bcs ?:? ?go\b', 'global offensive', '\bcs ?1\.6\b', '\bvalorant\b',
+                             '\b(iem|pgl|blast|esl|cct|major)\b']   # other games; tournament footage
+    discovery:
+      min_views: 300                  # long CS2 videos get fewer views than GTA 6 hype
+      max_video_minutes: 360          # streams are long; only max_scan_minutes of each is watched
+      lookback_hours: 168
+      # official tournament / league channels: broadcasts, not creators (and strict on copyright)
+      exclude_channel_patterns: ['^blast', '\besl\b', '\bpgl\b', '\bhltv\b', '\bcct\b', 'starladder',
+                                 'perfect world', '^iem\b', '\bfaceit\b$', '^counter-strike$', 'esports? tv']
+    scan:
+      fixed_queries: ["CS2 funny moments"]
+      search_durations: ["long"]      # streams are 20+ min; one band halves YouTube quota use
+    sources: [youtube, twitch]        # twitch is skipped (with a note) until its keys are in .env
+    upload:
+      extra_tags: ["cs2", "counter strike 2"]
+      hashtags: "#Shorts #CS2"
+    twitch:
+      game_name: "Counter-Strike"     # Twitch's category name for CS2
+      exclude_broadcaster_patterns: ['^esl', '^blast', '^pgl', 'hltv', '^faceit', 'starladder',
+                                     '^cct', 'perfectworld', '^iem', 'esportsworldcup', '^thunderpick']
+
+# ---- Who you are allowed to clip. `run` only ever processes videos that pass this. ----
+rights:
+  own_channel_ids: []                 # your own YouTube channel IDs (UC...)
+  permitted_channels: []              # creators who said yes, keep the proof:
+  #  - id: "UCxxxxxxxxxxxxxxxxxxxxxx"
+  #    name: "SomeCreator"
+  #    proof: "Discord DM 2026-11-20"
+  allow_creative_commons: true        # videos the creator licensed CC BY (attribution is added)
+
+# ---- YouTube discovery (YouTube Data API v3, env YOUTUBE_API_KEY) ----
+discovery:
+  queries: ["GTA 6 gameplay", "GTA 6 funny moments", "GTA 6 stream highlights"]   # used by find_candidates only
+  keywords: ["gta 6", "gta vi", "gta6", "grand theft auto vi", "grand theft auto 6"]
+  keyword_match: "off"                # off = trust the search (audit checks the game) | title | any
+  skip_compilations: true             # drop "best clips"-style titles before any Gemini call
+  exclude_channel_patterns: []        # regex on channel name (profiles add their own)
+  compilation_title_patterns: ['\bbest\b.*\bclips\b', '\bclips? of the (week|day|month)\b',
+    '\btwitch highlights\b', '\bcompilation\b', '\btop \d+\b', '\bmoments #?\d+\b', '\bclips #?\d+\b',
+    '\bhighlights #\d+\b', '\bbest moments\b']
+  exclude_title_patterns: ['\bgta ?(5|v)\b', '\bgrand theft auto (5|v)\b']   # regex; "gta v" but not "gta vi"
+  lookback_hours: 72
+  results_per_query: 25               # search.list costs 100 quota units per query
+  min_views: 2000
+  require_english: true               # skip videos whose audio language / title isn't English
+  min_video_minutes: 3
+  max_video_minutes: 240
+  max_videos_per_run: 5
+  collect_leads: true                 # also log popular non-permitted videos to output/permission_leads.csv
+  lead_queries: 1                     # how many of `queries` to spend on leads (100 units each)
+
+# ---- Automatic scanning: Gemini writes queries -> YouTube search -> top N videos -> Shorts ----
+scan:
+  query_model: ["gemini-3.6-flash", "gemini-3.1-flash-lite", "gemini-3.8-flash"]
+  use_google_search: true             # let Gemini check what is trending before writing queries
+  num_queries: 3                      # each costs 100 YouTube quota units
+  fixed_queries: []                   # always searched in addition, e.g. ["GTA 6 funny moments"]
+  top_n: 5                            # videos processed per scan
+  order: "viewCount"                  # viewCount | relevance | date
+  search_durations: ["long", "medium"]  # long = 20+ min, medium = 4-20 min; 100 quota units each per query
+  stream_vods_first: true             # past livestreams (the streamer's own channel) before everything else
+  stream_vod_boost: 3                 # used when stream_vods_first is false
+  only_rights_cleared: false          # false: also render videos you can't upload (review only)
+
+# ---- Gemini (env GEMINI_API_KEY): watches the video by URL, no download ----
+gemini:
+  key_rotation_hours: 8               # Gemini keys in .env, 2.env, 3.env ...: switch key every N h (0 = .env only)
+  # Each step tries these models in order; an overloaded (503) model falls through to the next.
+  audit_model: ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.6-flash"]   # cheap triage
+  audit_minutes: 30                   # triage looks at the first N minutes (0 = whole video)
+  audit_fps: 0.2                      # 1 frame every 5 s, low resolution
+  require_original_content: true      # reject compilations, fan re-cuts, tournament broadcasts, reuploads
+  min_audit_score: 5                  # for short/edited videos
+  min_audit_score_stream: 2           # streams/1h+ videos: low density is normal, moments step judges quality                  # 1-10 clip potential needed to continue
+  moments_model: ["gemini-3.6-flash", "gemini-4-hydrogen", "gemini-3.8-flash"]  # moments + titles
+                                      # 3.6-flash: 18-61 s on a 20-min video (Nov 2026).
+                                      # gemini-4-hydrogen: 87 s, similar picks, once hung 15+ min
+  moments_fps: 1
+  moments_resolution: "low"           # low | medium | high (low fits ~3 h per 1M tokens)
+  chunk_minutes: 40                   # long videos are scanned in windows of this size
+  max_scan_minutes: 60                # per video; longer videos: busiest hour (most replayed) or 3 x 20-min samples
+  samples: 3
+  skip_intro_minutes: 5               # streams open with "starting soon" screens
+  processing: "static"                # static | agentic (agentic: model navigates the video itself)
+  min_moment_score: 7
+
+clip:
+  min_seconds: 15
+  out_of_context_min_seconds: 5       # "out of context" lines land in a few seconds; padding them kills the joke
+  max_seconds: 55                     # Shorts may be up to 3 min, but short clips retain better
+  max_clips_per_video: 3
+  pad_seconds: 4                      # extra footage downloaded each side so cuts can be refined
+
+whisper:                              # local captions + cut refinement
+  model: "small"                      # tiny/base/small/medium/large-v3
+  device: "auto"                      # Apple Silicon runs on CPU
+
+render:
+  fg_height: 1000                     # 608 = whole 16:9 frame (small); 1000 = middle ~60%, bigger
+  anchor: "center"                    # left | center | right part of the frame to keep
+  font: "Arial Black"
+  font_size: 82
+  hook_from_title: false              # true = show the title as a banner for the first seconds
+  hook_seconds: 2.5
+  preset: "medium"
+  crf: 20
+
+# ---- Claude: used for local files and Twitch clips (env ANTHROPIC_API_KEY) ----
+claude:
+  model: "claude-sonnet-5-5"
+  min_score: 7
+
+twitch:                               # env TWITCH_CLIENT_ID / TWITCH_CLIENT_SECRET (dev.twitch.tv/console/apps)
+  key_rotation_hours: 8               # Twitch keys in .env, 2.env, 3.env ...: switch app every N h (0 = .env only)
+  game_name: ""                       # Twitch category name if it differs from game_name (profiles set it)
+  discover: true                      # top clips of the game across Twitch (review only without permission)
+  lookback_hours: 48
+  windows_hours: [3, 12, 48]          # rotates each round: newest clips, today's, the last 2 days
+  pages: 2                            # x100 clips, most viewed first
+  min_clip_views: 50
+  min_clip_seconds: 12
+  require_english: true               # the streamer's stream language
+  max_clips_per_run: 5                # each is one Gemini request
+  max_per_broadcaster: 2              # spread picks across streamers
+  exclude_broadcaster_patterns: []    # regex on the Twitch display name (plus discovery.exclude_channel_patterns)
+  # Who judges each clip. openai: frames (1/s) + transcript, paid (~$0.10/1M input tokens on gpt-6-luna),
+  # leaves Gemini's free quota to YouTube; falls back to Gemini if OPENAI_API_KEY is empty or a call fails.
+  provider: "openai"                  # openai | gemini
+  openai_model: "gpt-6-luna"          # cheapest current OpenAI model with image input (Nov 2026)
+  openai_fps: 1
+  openai_max_frames: 60
+  openai_frame_width: 512
+  openai_detail: "low"                # low | high | auto
+  # gemini: watches the clip itself (sent inline). The lite models: the YouTube moments step doesn't use them.
+  model: ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite"]
+  fps: 2
+  resolution: "medium"
+  min_score: 7
+  streamers:                          # permission: true = uploadable, and always checked for clips
+    - login: "example_streamer"
+      display: "ExampleStreamer"
+      permission: false               # true only with their OK
+      proof: ""
+
+upload:
+  mode: "review"                      # review = render only, approve each in output/review/
+                                      # auto   = upload straight to YouTube
+  privacy: "private"                  # private + schedule -> goes public at publishAt
+  schedule: true
+  schedule_gap_hours: 4
+  max_per_day: 5                      # each upload costs 1600 of 10,000 daily quota units
+  category_id: "20"                   # Gaming
+  made_for_kids: false
+  extra_tags: ["gta 6", "gta vi"]          # added to every upload
+  hashtags: "#Shorts #GTA6"             # appended to every description
+
+retry:
+  max_attempts: 3                     # failed videos are retried on later runs up to this
